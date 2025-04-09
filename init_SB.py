@@ -1,12 +1,15 @@
 import customtkinter as ctk
 from utils import get_mac_address, get_ip_address  # Importing utility functions from utils
+from Weighing import WeighingProcess
 import requests
 
-API_URL = "http://192.168.137.1:8000/api/check_box"
+
+API_URL = "http://192.168.1.60:8000/api/check_box"
 
 class INIT_SB(ctk.CTkFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, start_callback):
         super().__init__(parent)
+        self.start_callback = start_callback
         self.pack(fill="both", expand=True)
 
         # Close button at the top right
@@ -20,7 +23,7 @@ class INIT_SB(ctk.CTkFrame):
     
     #Function to close the main window
     def fermer_fenetre(self):
-        self.destroy()
+        self.master.destroy()
 
     def clear_screen(self):
         #Clear all widgets except the close button
@@ -34,7 +37,7 @@ class INIT_SB(ctk.CTkFrame):
 
         try:
             # Send POST request to the API
-            response = requests.post(API_URL, json=payload)
+            response = requests.post(API_URL, json=payload, timeout=5)
 
             if response.status_code == 200:
                 data = response.json()
@@ -42,7 +45,10 @@ class INIT_SB(ctk.CTkFrame):
                 if "error" in data:
                     self.update_status_screen("Serveur inaccessible")                
                 elif status == "SB Connected":
-                    self.update_status_screen("",show_start=True)
+                    self.smart_box = data["name"]
+                    self.smartbox_type = data["type"]
+                    self.update_status_screen("", show_start=True)
+                    return
                 elif status == "Missing position":  
                     self.update_status_screen("Manque de position")
                 elif status == "Missing implantation":
@@ -68,18 +74,18 @@ class INIT_SB(ctk.CTkFrame):
         label_status = ctk.CTkLabel(self, text=message, font=("Arial", 40, "bold"), text_color="white")
         label_status.place(relx=0.5, rely=0.5, anchor="center")
 
-        # Show the "Commencer" button only if status is "SB Connecté"
+        # Show the "load" button only if status is "SB Connecté"
         if show_start:
-            start_button = ctk.CTkButton(self, text="Charger", command=self.start_process,fg_color="blue", width=150, height=50, font=("Arial", 30, "bold"))
+            start_button = ctk.CTkButton(self, text="load", command=lambda: self.start_process(),fg_color="blue", width=150, height=50, font=("Arial", 30, "bold"))
             start_button.place(relx=1.0, rely=1.0, anchor="se", x=-10, y=-10)
 
     def start_process(self):
-        #Open a new frame (in the same window) for the next step
-        self.clear_screen()
-        label_process = ctk.CTkLabel(self, text="", font=("Arial", 24, "bold"), text_color="white")
-        label_process.place(relx=0.5, rely=0.4, anchor="center")
+        if not hasattr(self, 'smart_box') or not self.smart_box:
+            self.update_status_screen("SmartBox non définie")
+            return
 
-
-    
-
-   
+        try:
+            self.clear_screen()
+            self.start_callback(self.smart_box, self.smartbox_type) 
+        except Exception as e:
+            self.update_status_screen(f"Erreur: {str(e)}")
