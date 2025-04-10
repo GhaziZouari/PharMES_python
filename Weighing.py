@@ -47,29 +47,11 @@ class WeighingProcess(ctk.CTkFrame):
         
         self.code_value = ctk.CTkLabel(self, text="", font=("Arial", 25), text_color="#A2D5F2")
         self.lot_value = ctk.CTkLabel(self, text="", font=("Arial", 25), text_color="#A2D5F2")
-        self.designation_value = ctk.CTkLabel(self, text="", font=("Arial", 25), text_color="#A2D5F2", wraplength=300)
+        self.designation_value_first_line = ctk.CTkLabel(self, text="", font=("Arial", 25), text_color="#A2D5F2")
+        self.designation_value_second_line = ctk.CTkLabel(self, text="", font=("Arial", 25), text_color="#A2D5F2")
         self.num_contenant_value = ctk.CTkLabel(self, text="", font=("Arial", 25), text_color="#A2D5F2")
         self.qte_value = ctk.CTkLabel(self, text="", font=("Arial", 25), text_color="#A2D5F2")
         self.f_value = ctk.CTkLabel(self, text="", font=("Arial", 25), text_color="#A2D5F2")
-
-        # Position labels
-        self.code_label.place(relx=0.04, rely=0.2, anchor="w")
-        self.code_value.place(relx=0.21, rely=0.2, anchor="w")
-
-        self.lot_label.place(relx=0.04, rely=0.3, anchor="w")
-        self.lot_value.place(relx=0.26, rely=0.3, anchor="w")
-
-        self.designation_label.place(relx=0.04, rely=0.4, anchor="w")
-        self.designation_value.place(relx=0.36, rely=0.4, anchor="w")
-
-        self.num_contenant_label.place(relx=0.04, rely=0.5, anchor="w")
-        self.num_contenant_value.place(relx=0.45, rely=0.5, anchor="w")
-
-        self.qte_label.place(relx=0.04, rely=0.6, anchor="w")
-        self.qte_value.place(relx=0.35, rely=0.6, anchor="w")
-
-        self.f_label.place(relx=0.04, rely=0.7, anchor="w")
-        self.f_value.place(relx=0.13, rely=0.7, anchor="w")
 
         # Initially hide the send button
         self.send_btn = ctk.CTkButton(self, text="Send", command=self.send_weighing_data, fg_color="blue", width=150, height=50, font=("Arial", 30, "bold"))
@@ -94,29 +76,105 @@ class WeighingProcess(ctk.CTkFrame):
                         self.handle_error(data["error"]["message"])
                 else:
                     self.id_fiche_pesse = data.get('id_fiche_pesse')
+                    self.init_ui()
                     self.update_weighing_ui(data)
                     self.weighing_data = data
             
         
         except requests.exceptions.RequestException as e:
             self.handle_error("Erreur de connexion au serveur")    
-                
+
+    def split_into_two_lines(self, text, max_first_line_length=35):
+        words = text.split()  # Split text into individual words
+        first_line = []
+        second_line = []
+        
+        current_length = 0  # Tracks the length of the first line
+        
+        # Distribute words without breaking them
+        for word in words:
+            # Check if word fits in the first line
+            if current_length + len(word) <= max_first_line_length:
+                first_line.append(word)
+                current_length += len(word) + 1  # +1 accounts for the space between words
+            else:
+                second_line.append(word)
+
+        # Handle case where everything fits on one line
+        if not second_line:
+            return ' '.join(first_line), ""  # Return empty second line
+        
+        return ' '.join(first_line), ' '.join(second_line)
+    
+          
     def update_weighing_ui(self, data):
-        # Update labels with weighing data
+        
+        # Get the full designation
+        full_designation_value = data.get('designation', 'N/A')
+        # Split designation into two parts if too long
+        max_first_line_length = 28
+ 
+        first_line, second_line = self.split_into_two_lines(full_designation_value, max_first_line_length)
+
+        if second_line:  
+            # Position labels
+            self.code_label.place(relx=0.04, rely=0.05, anchor="w")
+            self.code_value.place(relx=0.21, rely=0.05, anchor="w")
+
+            self.lot_label.place(relx=0.04, rely=0.15, anchor="w")
+            self.lot_value.place(relx=0.26, rely=0.15, anchor="w")
+
+            self.designation_label.place(relx=0.04, rely=0.25, anchor="w")
+            self.designation_value_first_line.place(relx=0.36, rely=0.25, anchor="w")
+            
+            self.designation_value_second_line.place(relx=0.04, rely=0.35, anchor="w")
+
+            self.num_contenant_label.place(relx=0.04, rely=0.45, anchor="w")
+            self.num_contenant_value.place(relx=0.45, rely=0.45, anchor="w")
+
+            self.qte_label.place(relx=0.04, rely=0.55, anchor="w")
+            self.qte_value.place(relx=0.35, rely=0.55, anchor="w")
+
+            self.f_label.place(relx=0.04, rely=0.65, anchor="w")
+            self.f_value.place(relx=0.13, rely=0.65, anchor="w")
+        else :    
+            # Position labels
+            self.code_label.place(relx=0.04, rely=0.05, anchor="w")
+            self.code_value.place(relx=0.21, rely=0.05, anchor="w")
+
+            self.lot_label.place(relx=0.04, rely=0.15, anchor="w")
+            self.lot_value.place(relx=0.26, rely=0.15, anchor="w")
+
+            self.designation_label.place(relx=0.04, rely=0.25, anchor="w")
+            self.designation_value_first_line.place(relx=0.36, rely=0.25, anchor="w")
+            
+            self.num_contenant_label.place(relx=0.04, rely=0.35, anchor="w")
+            self.num_contenant_value.place(relx=0.45, rely=0.35, anchor="w")
+
+            self.qte_label.place(relx=0.04, rely=0.45, anchor="w")
+            self.qte_value.place(relx=0.35, rely=0.45, anchor="w")
+
+            self.f_label.place(relx=0.04, rely=0.55, anchor="w")
+            self.f_value.place(relx=0.13, rely=0.55, anchor="w")
+
+     # Update labels with weighing data
         self.code_value.configure(text=(data.get('code', 'N/A')))
         self.lot_value.configure(text=data.get('lot_mp', 'N/A'))
-        self.designation_value.configure(text=data.get('designation', 'N/A'))
+        if second_line:
+            self.designation_value_first_line.configure(text=first_line)
+            self.designation_value_second_line.configure(text=second_line)
+        else :
+            self.designation_value_first_line.configure(text=first_line)
         self.num_contenant_value.configure(text=data.get('num_contenant', 'N/A'))
         self.qte_value.configure(text=f"{data.get('qte_a_peser', 'N/A')} g")
         self.f_value.configure(text=data.get('F', 'N/A'))
-    
-        
-        # Store current F value
-        self.current_f = data.get('F', 0)
-        
-        # Enable send button after a delay (simulating balance reading)
+            
+       # Enable send button after a delay (simulating balance reading)
         self.after(2000, lambda: self.send_btn.configure(state="normal"))
+
+       
     
+  
                 
     def handle_error(self, error_message):
         self.error_state = error_message
@@ -132,16 +190,7 @@ class WeighingProcess(ctk.CTkFrame):
         )
         error_label.place(relx=0.5, rely=0.4, anchor="center")
         
-        # Ajouter un bouton pour revenir à l'écran précédent
-        back_button = ctk.CTkButton(self,
-            text="Retour",
-            command=self.return_to_previous_screen,
-            fg_color="blue",
-            width=150,
-            height=50,
-            font=("Arial", 30, "bold")
-        )
-        back_button.place(relx=0.5, rely=0.6, anchor="center")
+     
 
     def send_weighing_data(self):
         self.send_btn.configure(state="disabled")

@@ -81,7 +81,7 @@ class INIT_SB(ctk.CTkFrame):
 
     def start_process(self):
         if not hasattr(self, 'smart_box') or not self.smart_box:
-            self.update_status_screen("SmartBox non définie")
+            self.update_status_screen("")
             return
 
         try:
