@@ -4,7 +4,7 @@ from Weighing import WeighingProcess
 import requests
 
 
-API_URL = "http://192.168.1.60:8000/api/check_box"
+API_URL = "http://192.168.1.105:8000/api/check_box"
 
 class INIT_SB(ctk.CTkFrame):
     def __init__(self, parent, start_callback):

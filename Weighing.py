@@ -4,10 +4,9 @@ import requests
 from datetime import datetime
 import re
 
-API_URL = "http://192.168.1.60:8000/api"
+API_URL = "http://192.168.1.105:8000/api"
 WEIGHING_INFO_ENDPOINT = f"{API_URL}/weighing/info"
 VALIDATE_WEIGHING_ENDPOINT = f"{API_URL}/weighing/validate"
-CHECK_WEIGHING_ENDPOINT = f"{API_URL}/weighing/check"
 CHECK_BOX_ENDPOINT = f"{API_URL}/check_box"
 
 class WeighingProcess(ctk.CTkFrame):
@@ -110,7 +109,7 @@ class WeighingProcess(ctk.CTkFrame):
                 self.handle_error("Veuillez scanner une matière première")
 
       except requests.exceptions.RequestException as e:
-            self.handle_error("Veuillez réessayerr")
+            self.handle_error("Veuillez réessayer")
       finally:
             if not self.error_state:  # Only re-enable if no error
                 self.action_btn.configure(state="normal")
@@ -157,10 +156,10 @@ class WeighingProcess(ctk.CTkFrame):
             if show_balance:
                 self.gross_label.place(relx=0.04, rely=0.75, anchor="w")
                 self.net_label.place(relx=0.402, rely=0.75, anchor="w")
-                self.tare_label.place(relx=0.67, rely=0.75, anchor="w")
+                self.tare_label.place(relx=0.69, rely=0.75, anchor="w")
                 self.gross_value.place(relx=0.215, rely=0.75, anchor="w")
                 self.net_value.place(relx=0.525, rely=0.75, anchor="w")
-                self.tare_value.place(relx=0.81, rely=0.75, anchor="w")
+                self.tare_value.place(relx=0.83, rely=0.75, anchor="w")
         else:
             self.code_label.place(relx=0.04, rely=0.05, anchor="w")
             self.code_value.place(relx=0.21, rely=0.05, anchor="w")
@@ -177,10 +176,10 @@ class WeighingProcess(ctk.CTkFrame):
             if show_balance:
                 self.gross_label.place(relx=0.04, rely=0.65, anchor="w")
                 self.net_label.place(relx=0.402, rely=0.65, anchor="w")
-                self.tare_label.place(relx=0.67, rely=0.65, anchor="w")
+                self.tare_label.place(relx=0.69, rely=0.65, anchor="w")
                 self.gross_value.place(relx=0.215, rely=0.65, anchor="w")
                 self.net_value.place(relx=0.525, rely=0.65, anchor="w")
-                self.tare_value.place(relx=0.81, rely=0.65, anchor="w")
+                self.tare_value.place(relx=0.83, rely=0.65, anchor="w")
 
         # Update labels with weighing data
         self.code_value.configure(text=data.get('code', 'N/A'))
@@ -192,7 +191,7 @@ class WeighingProcess(ctk.CTkFrame):
             self.designation_value_first_line.configure(text=first_line)
         self.num_contenant_value.configure(text=data.get('num_contenant', 'N/A'))
         self.qte_value.configure(text=f"{data.get('qte_a_peser', 'N/A')} g")
-        self.f_value.configure(text=data.get('F', 'N/A'))
+        self.f_value.configure(text=data.get('F'))
 
         # Update balance values if shown
         if show_balance:
@@ -213,17 +212,17 @@ class WeighingProcess(ctk.CTkFrame):
             if self.designation_value_second_line.cget("text"):
                 self.gross_label.place(relx=0.04, rely=0.75, anchor="w")
                 self.net_label.place(relx=0.402, rely=0.75, anchor="w")
-                self.tare_label.place(relx=0.67, rely=0.75, anchor="w")
+                self.tare_label.place(relx=0.69, rely=0.75, anchor="w")
                 self.gross_value.place(relx=0.215, rely=0.75, anchor="w")
                 self.net_value.place(relx=0.525, rely=0.75, anchor="w")
-                self.tare_value.place(relx=0.81, rely=0.75, anchor="w")
+                self.tare_value.place(relx=0.83, rely=0.75, anchor="w")
             else:
                 self.gross_label.place(relx=0.04, rely=0.65, anchor="w")
                 self.net_label.place(relx=0.402, rely=0.65, anchor="w")
-                self.tare_label.place(relx=0.67, rely=0.65, anchor="w")
+                self.tare_label.place(relx=0.69, rely=0.65, anchor="w")
                 self.gross_value.place(relx=0.215, rely=0.65, anchor="w")
                 self.net_value.place(relx=0.525, rely=0.65, anchor="w")
-                self.tare_value.place(relx=0.81, rely=0.65, anchor="w")
+                self.tare_value.place(relx=0.83, rely=0.65, anchor="w")
             self.action_btn.configure(state="normal", text="Send",command=self.send_weighing_data, fg_color="#A2D5F2")
 
     def handle_error(self, error_message):
@@ -249,7 +248,6 @@ class WeighingProcess(ctk.CTkFrame):
         lines = []
         current_line = []
         current_width = 0
-        font_size = 35  # Matches font=("Arial", 35)
         # Approximate pixels per character for Arial at 35pt
         pixels_per_char = 10 # Adjusted for larger font size
 
@@ -285,22 +283,6 @@ class WeighingProcess(ctk.CTkFrame):
             self.net_value.configure(text=f"{balance_data['net']} g")
             self.tare_value.configure(text=f"{balance_data['tare']} g")
 
-            # Check if the weighing already exists
-            check_payload = {
-                "smart_box": self.smart_box,
-                "id_fiche_pesse": self.id_fiche_pesse
-            }
-
-            check_response = requests.post(CHECK_WEIGHING_ENDPOINT, json=check_payload)
-            check_data = check_response.json()
-
-            if check_response.status_code == 200 and check_data.get('status') == 'exists':
-                # Entry already exists, no need to recreate
-                self.action_btn.configure(state="normal", text="Load",
-                                        command=self.load_weighing_data, fg_color="#A2D5F2")
-                return
-
-            # Proceed with sending data if no entry exists or creation is needed
             payload = {
                 "smart_box": self.smart_box,
                 "id_fiche_pesse": self.id_fiche_pesse,
@@ -320,11 +302,9 @@ class WeighingProcess(ctk.CTkFrame):
             if response.status_code == 200:
                 data = response.json()
 
-                if data.get("message") == "Max Weight Exceeded":
+                if data.get("message") == "Check the weight !":
                     self.clear_screen()
-                    error_label = ctk.CTkLabel(self, text="Vous dépassez la quantité max !",
-                                            font=("Arial", 30), text_color="red")
-                    error_label.place(relx=0.5, rely=0.5, anchor="center")
+                    self.handle_error("Veuillez vérifier la quantité pesée !")
                     # After 2 seconds, reload initial weighing data
                     self.after(2000, lambda: self.load_weighing_data())
                 else:
@@ -333,11 +313,12 @@ class WeighingProcess(ctk.CTkFrame):
                                             command=self.load_weighing_data, fg_color="#A2D5F2")
                     
             else:
+                self.status_label.configure(text="Veuillez réessayer")
                 self.action_btn.configure(state="normal", text="Send",
                                         command=self.send_weighing_data, fg_color="#A2D5F2")
 
         except requests.exceptions.RequestException:
-            self.status_label.configure(text="Erreur de connexion au serveur")
+            self.status_label.configure(text="Veuillez réessayer")
             self.action_btn.configure(state="normal", text="Send",
                                     command=self.send_weighing_data, fg_color="#A2D5F2")
     def read_balance_file(self):
@@ -346,7 +327,7 @@ class WeighingProcess(ctk.CTkFrame):
             else "/home/advx/PharMES_python/balance_PRINCIPE_ACTIF.txt"
         )
 
-        def parse_with_regex(file_path, is_excipient=True):
+        def parse_with_regex(file_path):
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -354,87 +335,101 @@ class WeighingProcess(ctk.CTkFrame):
                 with open(file_path, 'r', encoding='cp1252') as f:
                     content = f.read()
 
-                    date_match = re.search(
-                        r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}|\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2})',
-                        content
-                    )
+            # Date parsing (works for both formats)
+            date_match = re.search(
+                r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}|\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2})',
+                content
+            )
+            date_str = date_match.group(1) if date_match else None
+            formatted_date = None
 
-                    date_str = date_match.group(1) if date_match else None
-                    formatted_date = None
-
-                    if date_str:
-                        cleaned_date_str = re.sub(r'\s+', ' ', date_str.strip())
-
-                        try:
-                            if '.' in cleaned_date_str:
-                                parsed_date = datetime.strptime(cleaned_date_str, '%d.%m.%Y %H:%M')
-                            elif '-' in cleaned_date_str:
-                                parsed_date = datetime.strptime(cleaned_date_str, '%Y-%m-%d %H:%M')
-                            else:
-                                parsed_date = None
-                        except ValueError as e:
-                            parsed_date = None
-
-                        if parsed_date:
-                            formatted_date = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
-
-                    gross = tare = net = None
-
-                    if is_excipient:
-                        balance_id_match = re.search(r'Nø r‚f\s+(\w+)', content)
-                        balance_id = balance_id_match.group(1) if balance_id_match else None
-
-                        name_match = re.search(r'Type de balance\s*\n\s*(.+)', content)
-                        balance_name = name_match.group(1).strip() if name_match else None
-
-                        gross_match = re.search(r'G\s+([\d.]+)\s*g', content)
-                        tare_match = re.search(r'T\s+([\d.]+)\s*g', content)
-                        net_match = re.search(r'N\s+([\d.]+)\s*g', content)
-
-                        gross = float(gross_match.group(1)) if gross_match else None
-                        tare = float(tare_match.group(1)) if tare_match else None
-                        net = float(net_match.group(1)) if net_match else None
-
-                        return {
-                            'date': formatted_date,
-                            'balance_ID': balance_id,
-                            'balance_name': balance_name,
-                            'gross': gross,
-                            'tare': tare,
-                            'net': net
-                        }
+            if date_str:
+                cleaned_date_str = re.sub(r'\s+', ' ', date_str.strip())
+                try:
+                    if '.' in cleaned_date_str:
+                        parsed_date = datetime.strptime(cleaned_date_str, '%d.%m.%Y %H:%M')
+                    elif '-' in cleaned_date_str:
+                        parsed_date = datetime.strptime(cleaned_date_str, '%Y-%m-%d %H:%M')
                     else:
-                        tare_match = re.search(r'T\s+([\d.]+)\s*g', content)
-                        tare = float(tare_match.group(1)) if tare_match else None
+                        parsed_date = None
+                except ValueError:
+                    parsed_date = None
 
-                        gross_match = re.search(r'B\s+([\d.]+)\s*g', content)
-                        gross = float(gross_match.group(1)) if gross_match else None
+                if parsed_date:
+                    formatted_date = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
 
-                        net_match = re.search(r'N\s+([\d.]+)\s*g', content)
-                        if net_match:
-                            net = float(net_match.group(1))
-                        else:
-                            float_matches = re.findall(r'^\s+([\d.]+)\s+g', content, re.MULTILINE)
-                            if float_matches:
-                                for val in float_matches:
-                                    fval = float(val)
-                                    if fval != tare and fval != gross:
-                                        net = fval
+            if self.smartbox_type == "EXCIPIENT":
+                # EXCIPIENT parsing
+                balance_id_match = re.search(r'Nø r‚f\s+(\w+)', content)
+                balance_id = balance_id_match.group(1) if balance_id_match else None
+
+                name_match = re.search(r'Type de balance\s*\n\s*(.+)', content)
+                balance_name = name_match.group(1).strip() if name_match else None
+
+                gross_match = re.search(r'[G]\s+([\d.]+)\s*g', content)
+                tare_match = re.search(r'[T]\s+([\d.]+)\s*g', content)
+                net_match = re.search(r'[N]\s+([\d.]+)\s*g', content)
+
+                gross = float(gross_match.group(1)) if gross_match else None
+                tare = float(tare_match.group(1)) if tare_match else None
+                net = float(net_match.group(1)) if net_match else None
+
+            elif self.smartbox_type == "PRINCIPE_ACTIF":
+                # PRINCIPE_ACTIF parsing - more robust handling
+                balance_id = ''
+                balance_name = ''
+
+                # Find T (tare) and B (gross) values
+                tare_match = re.search(r'T\s+([\d.]+)\s*g', content)
+                gross_match = re.search(r'B\s+([\d.]+)\s*g', content)
+                
+                tare = float(tare_match.group(1)) if tare_match else None
+                gross = float(gross_match.group(1)) if gross_match else None
+
+                # Try to find N (net) first
+                net_match = re.search(r'N\s+([\d.]+)\s*g', content)
+                if net_match:
+                    net = float(net_match.group(1))
+                else:
+                    # If N not found, look for value between T and B
+                    lines = content.splitlines()
+                    found_t = False
+                    net = None
+                    
+                    for line in lines:
+                        if re.search(r'T\s+([\d.]+)\s*g', line):
+                            found_t = True
+                            continue
+                        if re.search(r'B\s+([\d.]+)\s*g', line):
+                            break
+                        if found_t:
+                            # Look for a line with just a number and 'g'
+                            value_match = re.search(r'^\s*([\d.]+)\s*g\s*$', line.strip())
+                            if value_match:
+                                try:
+                                    value = float(value_match.group(1))
+                                    # Ensure it's not the tare or gross value
+                                    if (tare is None or abs(value - tare) > 0.01) and \
+                                    (gross is None or abs(value - gross) > 0.01):
+                                        net = value
                                         break
+                                except ValueError:
+                                    pass
 
-                        return {
-                            'date': formatted_date,
-                            'balance_ID': '',
-                            'balance_name': '',
-                            'gross': gross,
-                            'tare': tare,
-                            'net': net
-                        }
-            except FileNotFoundError:
-                return None
+            return {
+                'date': formatted_date,
+                'balance_ID': balance_id,
+                'balance_name': balance_name,
+                'gross': gross,
+                'tare': tare,
+                'net': net
+            }
 
-        is_excipient = self.smartbox_type.upper() == "EXCIPIENT"
-        return parse_with_regex(file_path, is_excipient)
+        try:
+            return parse_with_regex(file_path)
+        except Exception as e:
+            print(f"Error reading balance file: {e}")
+            return None
 
     def clear_screen(self):
         #Clear all widgets except the close button and action button.
